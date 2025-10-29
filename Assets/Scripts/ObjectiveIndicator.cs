@@ -4,58 +4,60 @@ using UnityEngine;
 
 public class ObjectiveIndicator : MonoBehaviour
 {
-    public Camera playerCamera;
-    public RectTransform indicator;
-    public float minDistance = 1f;
-    public float maxDistance = 10f;
-    public float minScale = 0.5f;
-    public float maxScale = 2f;
-    public Transform currentTarget;
+    public Transform currentTarget;     // Текущая цель с индикатором
+    public Camera playerCamera;         // Камера игрока
+    public RectTransform indicator;     // Оранжевый кружок (индикатор для задания)
+    public float minDistance = 1f;      // Мин.Дистанция до объекта
+    public float maxDistance = 10f;     // Мах.Дистанция до объекта
+    public float minScale = 0.5f;       // Мин.Размер индикатора
+    public float maxScale = 2f;         // Мах.Размер индикатора
+    
 
-
-    // Update is called once per frame
     void Update()
     {
-        if (indicator == null || playerCamera == null)
+        if (indicator == null || playerCamera == null)      // Проверка есть ли камера и индикатор
         {
             return;
         }
-        UpdateCurrentTarget();
-        if (currentTarget == null)
+        UpdateCurrentTarget();                              // Обновляем цель в соответствии с текущей задачей
+        if (currentTarget == null)                          // Если нет цели выключаем индикатор
         {
             indicator.gameObject.SetActive(false);
             return;
         }
-        else
+        else            // Если цель найдена - включаем индикатор
         {
             indicator.gameObject.SetActive(true);
         }
 
-        Vector3 screenPos = playerCamera.WorldToScreenPoint(currentTarget.position);
+        Vector3 screenPos = playerCamera.WorldToScreenPoint(currentTarget.position);        // Получаем координаты объекта на экране
         if (screenPos.z < 0)
         {
             screenPos *= -1;
         }
-        screenPos.x = Mathf.Clamp(screenPos.x, 0, Screen.width);
-        screenPos.y = Mathf.Clamp(screenPos.y, 0, Screen.height);
+        screenPos.x = Mathf.Clamp(screenPos.x, 0, Screen.width);                            // Ограничиваем позицию индикатора на границах экрана
+        screenPos.y = Mathf.Clamp(screenPos.y, 0, Screen.height);                           // Ограничиваем позицию индикатора на границах экрана
 
-        indicator.position = screenPos;
-        float distance = Vector3.Distance(playerCamera.transform.position, currentTarget.position);
-        float scale = Mathf.Lerp(minScale, maxScale, Mathf.InverseLerp(minDistance, maxDistance, distance));
-        indicator.localScale = Vector3.one * scale;
+        indicator.position = screenPos;         // Перемещаем индикатор в нужное место
+        float distance = Vector3.Distance(playerCamera.transform.position, currentTarget.position);             // Считаем расстояние до цели
+        float scale = Mathf.Lerp(minScale, maxScale, Mathf.InverseLerp(minDistance, maxDistance, distance));    // Маштаб индикатора в зависимости от расстояния
+        indicator.localScale = Vector3.one * scale;     // Применяем рассчитаный маштаб
     }
-    void UpdateCurrentTarget()
+    void UpdateCurrentTarget()          // Ищем текущий интерактивный объект
     {
-        currentTarget = null;
+        currentTarget = null;           // Сбрасываем текущую цель
 
-        Interactable[] allInteractables = FindObjectsOfType<Interactable>();
+        Interactable[] allInteractables = FindObjectsOfType<Interactable>();        // Находим все интерактивные объекты
 
-        foreach (var obj in allInteractables)
+        foreach (var obj in allInteractables)       // Перебираем объекты
         {
-            if (obj.taskIndex == TaskManager.instance.currentTask)
+            foreach (var index in obj.taskIndex)    
             {
-                currentTarget = obj.transform;
-                break;
+                if (index == TaskManager.instance.currentTask)      // Если текущая задача совпадает
+                {
+                    currentTarget = obj.transform;                  // Запоминаем цель
+                    return;
+                }
             }
         }
     }

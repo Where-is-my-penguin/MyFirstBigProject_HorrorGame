@@ -21,7 +21,7 @@ public class Inspectable : MonoBehaviour
     private GameObject activeCopy;                          // Активная копия объекта
     private DepthOfField dof;                               // Depth Of Field
 
-    private void Start()            
+    private void Start()                                    // Находит глубину резкости и сохраняет его
     {
         if (postProcessVolume != null)
             postProcessVolume.profile.TryGetSettings(out dof);

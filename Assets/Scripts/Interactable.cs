@@ -8,30 +8,56 @@ using UnityEngine;
 
 public class Interactable : MonoBehaviour
 {
-    public int taskIndex;
+    public int[] taskIndex;                     // Массив задач  (можно несколько задач)
+    public AudioClip[] audioClips;              // Массив звуков (для каждой задачи)
+    private Collider col;                       // Коллайдер объекта
+    public GameObject objectToEnable;           // Объект который должен включаться
+
+
+    private void Awake()                        
+    {
+        col = GetComponent<Collider>();         // Получаем коллайдер объекта                                                                                         
+    }
 
     // Обновление вызывается один раз за кадр
     void Update()
     {
-        if (TaskManager.instance.currentTask == taskIndex)              //В соответствии с задачей включаем/отключаем коллайдер
+        bool isActiveTast = false;                                                                                                               
+        foreach (var index in taskIndex)                    // Перебираем номера задач
         {
-            GetComponent<Collider>().enabled = true;                    //Включаем коллайдер
+            if (TaskManager.instance.currentTask == index)  // Если совпадает с текущей задачей
+            {
+                isActiveTast = true;    // Если объект активен
+                break;                  // Выходим из цикла
+            }
         }
-        else
-        {
-            GetComponent<Collider>().enabled = false;                   //Выключаем коллайдер
-        }
+        if (col != null)                // Если коллайдер есть
+            col.enabled = isActiveTast; // Если коллайдер включен, то можно взаимодействовать
     }
 
-    public void Activate()
+    public void Activate()              // Когда игрок взаимодействует с объектом
     {
-        Debug.Log("Игрок взаимодействует с: " + gameObject.name);
+        Debug.Log("Игрок взаимодействует с: " + gameObject.name);       // С каким объектом взаимодействуем 
 
-        AudioSource audio = GetComponent<AudioSource>();
+        AudioSource audio = GetComponent<AudioSource>();                // Получаем аудио
         if (audio != null)
         {
-            audio.Play();
-            TaskManager.instance.currentTask++;                 // Переходим к следующей задаче 
+            for (int i = 0; i < taskIndex.Length; i++)                  // Перебираем все задачи
+            {
+                if (TaskManager.instance.currentTask == taskIndex[i] && i < audioClips.Length && audioClips[i] != null)     // Для первой задачи запускаем первый звук
+                {
+                    audio.clip = audioClips[i];     // Устанавливаем нужный звук
+                    audio.Play();                   // Играем звук
+                    break;
+                }
+                if (objectToEnable != null && !objectToEnable.activeSelf)       // Если ножно включить объект - включаем
+                {
+                    objectToEnable.SetActive(true);
+                    TaskManager.instance.currentTask++;
+                    return;
+                }
+            }
+            TaskManager.instance.currentTask++;                 // Переход к следующей задаче
         }
 
         Door door = GetComponent<Door>();                       // Если есть скрипт "Door"
@@ -46,6 +72,5 @@ public class Interactable : MonoBehaviour
             inspectable.StartInspecting();
             return;
         }
-
     }
 }
